@@ -1,5 +1,6 @@
 # go-phajay
 
+[![CI](https://github.com/dee25092005/go-phajay/actions/workflows/ci.yml/badge.svg)](https://github.com/dee25092005/go-phajay/actions/workflows/ci.yml)
 [![Version](https://img.shields.io/github/v/tag/dee25092005/go-phajay?label=version&sort=semver)](https://github.com/dee25092005/go-phajay/tags)
 [![Go Reference](https://pkg.go.dev/badge/github.com/dee25092005/go-phajay.svg)](https://pkg.go.dev/github.com/dee25092005/go-phajay)
 [![Go Report Card](https://goreportcard.com/badge/github.com/dee25092005/go-phajay)](https://goreportcard.com/report/github.com/dee25092005/go-phajay)
