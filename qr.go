@@ -35,13 +35,29 @@ type QRRequest struct {
 }
 
 // QRResponse is the gateway reply for a generated bank QR.
-// Link is a deeplink that opens the paying bank's own mobile app (BCEL uses
-// onepay://). It may be empty, for example for IB, which has no app deeplink.
+//
+// Each bank issues its own native-app URI scheme via the Link field.
+// The PhaJay gateway uses the phapay:// scheme as the universal deeplink
+// wrapper that routes into each bank's native app:
+//
+//   - BCEL  → phapay://qr/bcel/<qrCode>
+//   - LDB   → phapay://qr/ldb/<qrCode>
+//   - JDB   → phapay://qr/jdb/<qrCode>
+//   - IB    → "" (empty — IB has no mobile-app deeplink)
+//
+// Use [QRResponse.NativeAppURI] to get the Link, or fall back to constructing
+// the URI yourself when the gateway returns an empty string.
 type QRResponse struct {
 	Message       string `json:"message"`
 	TransactionID string `json:"transactionId"`
 	QRCode        string `json:"qrCode"`
 	Link          string `json:"link"`
+}
+
+// NativeAppURI returns the bank-specific mobile-app deeplink URI from the
+// gateway response (the Link field). It is empty for IB which has no app.
+func (r *QRResponse) NativeAppURI() string {
+	return r.Link
 }
 
 func (c *Client) GenerateQR(ctx context.Context, bank Bank, req QRRequest) (*QRResponse, error) {

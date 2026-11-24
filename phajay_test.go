@@ -27,11 +27,12 @@ func TestGenerateQR_EnvModesAndRules(t *testing.T) {
 		gotPath = r.URL.Path
 		gotSecretHeader = r.Header.Get("secretKey")
 		w.Header().Set("Content-Type", "application/json")
-		_, _ = w.Write([]byte(`{"message":"SUCCESSFULLY","transactionId":"TXN-UUID-123","qrCode":"000201...","link":"onepay://qr/000201..."}`))
+		// Real PhaJay API returns phapay://qr/<bank>/<qrCode>
+		_, _ = w.Write([]byte(`{"message":"SUCCESSFULLY","transactionId":"TXN-UUID-123","qrCode":"000201...","link":"phapay://qr/bcel/000201..."}`))
 	}))
 	defer srv.Close()
 
-	// 1. EnvTest hits standard /payment/generate-bcel-qr (returns onepay://)
+	// 1. EnvTest hits standard /payment/generate-bcel-qr (returns phapay://qr/bcel/...)
 	testClient, err := phajay.New(phajay.Config{
 		SecretKey: "test_key_123",
 		Env:       phajay.EnvTest,
@@ -49,7 +50,7 @@ func TestGenerateQR_EnvModesAndRules(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if gotPath != "/payment/generate-bcel-qr" || gotSecretHeader != "test_key_123" || res.Link != "onepay://qr/000201..." {
+	if gotPath != "/payment/generate-bcel-qr" || gotSecretHeader != "test_key_123" || res.Link != "phapay://qr/bcel/000201..." {
 		t.Fatalf("unexpected test response: path=%s res=%+v", gotPath, res)
 	}
 
