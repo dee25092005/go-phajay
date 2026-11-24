@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-	// Reads PHAJAY_SECRET_KEY and PHAJAY_ENV=sandbox|production from environment
+	// Reads PHAJAY_SECRET_KEY and PHAJAY_ENV=test|production|mock from environment
 	pg, err := phajay.NewFromEnv()
 	if err != nil {
 		log.Fatal(err)
