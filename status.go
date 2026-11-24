@@ -29,10 +29,21 @@ type TransactionData struct {
 	CreatedAt     string  `json:"createdAt"`
 }
 
-func (c *Client) CheckStatus(ctx context.Context, transactionID string) (*TransactionStatusResponse, error) {
-	id := strings.TrimSpace(transactionID)
+// ID returns TransactionID when populated, falling back to LinkCode for Payment Link transactions.
+func (d TransactionData) ID() string {
+	if d.TransactionID != "" {
+		return d.TransactionID
+	}
+	if d.LinkCode != nil {
+		return *d.LinkCode
+	}
+	return ""
+}
+
+func (c *Client) CheckStatus(ctx context.Context, transactionOrLinkID string) (*TransactionStatusResponse, error) {
+	id := strings.TrimSpace(transactionOrLinkID)
 	if id == "" {
-		return nil, errors.New("phajay: transactionID is required")
+		return nil, errors.New("phajay: transactionOrLinkID is required")
 	}
 
 	path := "/payment/check-transaction/status/" + url.PathEscape(id)

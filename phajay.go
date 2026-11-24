@@ -12,9 +12,18 @@ import (
 	"os"
 	"strings"
 	"time"
+	"unicode/utf8"
 )
 
 const DefaultBaseURL = "https://payment-gateway.phajay.co/v1/api"
+
+type Env string
+
+const (
+	EnvProduction Env = "production"
+	EnvTest       Env = "test"
+	EnvMock       Env = "mock"
+)
 
 type authMode int
 
@@ -25,14 +34,14 @@ const (
 
 type Config struct {
 	SecretKey  string
-	IsSandbox  bool
+	Env        Env
 	BaseURL    string
 	HTTPClient *http.Client
 }
 
 type Client struct {
 	secretKey  string
-	isSandbox  bool
+	env        Env
 	baseURL    string
 	httpClient *http.Client
 }
@@ -50,7 +59,17 @@ func (e *APIError) Error() string {
 	return fmt.Sprintf("phajay: request failed with status %d", e.StatusCode)
 }
 
-// check config
+func normalizeEnv(raw string) Env {
+	switch strings.ToLower(strings.TrimSpace(raw)) {
+	case "test", "dev":
+		return EnvTest
+	case "mock", "sandbox":
+		return EnvMock
+	default:
+		return EnvProduction
+	}
+}
+
 func New(cfg Config) (*Client, error) {
 	key := strings.TrimSpace(cfg.SecretKey)
 	if key == "" {
@@ -66,24 +85,70 @@ func New(cfg Config) (*Client, error) {
 	}
 	return &Client{
 		secretKey:  key,
-		isSandbox:  cfg.IsSandbox,
+		env:        normalizeEnv(string(cfg.Env)),
 		baseURL:    baseURL,
 		httpClient: httpClient,
 	}, nil
 }
 
-// read from env
 func NewFromEnv() (*Client, error) {
-	env := strings.ToLower(strings.TrimSpace(os.Getenv("PHAJAY_ENV")))
 	return New(Config{
 		SecretKey: os.Getenv("PHAJAY_SECRET_KEY"),
-		IsSandbox: env == "sandbox" || env == "test",
+		Env:       normalizeEnv(os.Getenv("PHAJAY_ENV")),
 		BaseURL:   os.Getenv("PHAJAY_BASE_URL"),
 	})
 }
 
-// check if the client is in sandbox mode or not
-func (c *Client) IsSandbox() bool { return c.isSandbox }
+func (c *Client) Env() Env { return c.env }
+
+func (c *Client) validatePayment(amount float64, description string, bank Bank) error {
+	if amount <= 0 {
+		return errors.New("phajay: amount must be greater than 0")
+	}
+	desc := strings.TrimSpace(description)
+	if desc == "" {
+		return errors.New("phajay: description is required")
+	}
+
+	if c.env == EnvTest || c.env == EnvMock {
+		if amount < 1 || amount > 999 {
+			return errors.New("phajay: test mode amount must be between 1 and 999")
+		}
+		if containsLao(desc) {
+			return errors.New("phajay: test mode description does not support Lao characters")
+		}
+	}
+
+	switch bank {
+	case BankBCEL:
+		if containsLaoOrThai(desc) {
+			return errors.New("phajay: bcel description does not support Lao or Thai characters")
+		}
+	case BankAPB:
+		if utf8.RuneCountInString(desc) >= 25 {
+			return errors.New("phajay: apb description must be shorter than 25 characters")
+		}
+	}
+	return nil
+}
+
+func containsLao(s string) bool {
+	for _, r := range s {
+		if r >= 0x0E80 && r <= 0x0EFF {
+			return true
+		}
+	}
+	return false
+}
+
+func containsLaoOrThai(s string) bool {
+	for _, r := range s {
+		if (r >= 0x0E00 && r <= 0x0E7F) || (r >= 0x0E80 && r <= 0x0EFF) {
+			return true
+		}
+	}
+	return false
+}
 
 func (c *Client) do(ctx context.Context, method, path string, mode authMode, payload, out any) error {
 	var body io.Reader

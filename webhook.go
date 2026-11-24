@@ -14,38 +14,59 @@ const SignatureHeader = "X-Signature"
 
 var ErrInvalidSignature = errors.New("phajay: invalid webhook signature")
 
+// WebhookPayload represents a PhaJay callback event across both Sandbox and Production.
+// RefNo uses json.RawMessage because PhaJay sends a number on QR callbacks and a string on Payment Link callbacks.
 type WebhookPayload struct {
-	Message        string          `json:"message"`
-	RefNo          json.RawMessage `json:"refNo"`
-	ExReferenceNo  string          `json:"exReferenceNo"`
-	MerchantName   string          `json:"merchantName"`
-	Memo           string          `json:"memo"`
-	Description    string          `json:"description"`
-	Remark         string          `json:"remark"`
-	PaymentMethod  string          `json:"paymentMethod"`
-	TxnDateTime    string          `json:"txnDateTime"`
-	TxnAmount      float64         `json:"txnAmount"`
-	BillNumber     string          `json:"billNumber"`
-	SourceAccount  string          `json:"sourceAccount"`
-	SourceName     string          `json:"sourceName"`
-	SourceCurrency string          `json:"sourceCurrency"`
-	PaymentID      string          `json:"paymentId"`
-	LinkCode       string          `json:"linkCode"`
-	TransactionID  string          `json:"transactionId"`
-	UserID         string          `json:"userId"`
-	OrderNo        string          `json:"orderNo"`
-	SuccessURL     string          `json:"successURL"`
-	Status         string          `json:"status"`
-	Tag1           string          `json:"tag1"`
-	Tag2           string          `json:"tag2"`
-	Tag3           string          `json:"tag3"`
-	Tag4           string          `json:"tag4"`
-	Tag5           string          `json:"tag5"`
-	Tag6           string          `json:"tag6"`
+	Message         string          `json:"message"`
+	RefNo           json.RawMessage `json:"refNo"`
+	ExReferenceNo   string          `json:"exReferenceNo"`
+	MerchantName    string          `json:"merchantName"`
+	Memo            string          `json:"memo"`
+	Description     string          `json:"description"`
+	DescriptionTypo string          `json:"descriptione"`
+	Remark          string          `json:"remark"`
+	PaymentMethod   string          `json:"paymentMethod"`
+	Origin          string          `json:"origin"`
+	TxnDateTime     string          `json:"txnDateTime"`
+	TxnAmount       float64         `json:"txnAmount"`
+	Amount          float64         `json:"amount"`
+	BillNumber      string          `json:"billNumber"`
+	SourceAccount   string          `json:"sourceAccount"`
+	SourceName      string          `json:"sourceName"`
+	SourceCurrency  string          `json:"sourceCurrency"`
+	PaymentID       string          `json:"paymentId"`
+	LinkCode        string          `json:"linkCode"`
+	TransactionID   string          `json:"transactionId"`
+	UserID          string          `json:"userId"`
+	OrderNo         string          `json:"orderNo"`
+	SuccessURL      string          `json:"successURL"`
+	Status          string          `json:"status"`
+	Tag1            string          `json:"tag1"`
+	Tag2            string          `json:"tag2"`
+	Tag3            string          `json:"tag3"`
+	Tag4            string          `json:"tag4"`
+	Tag5            string          `json:"tag5"`
+	Tag6            string          `json:"tag6"`
 }
 
 func (p WebhookPayload) IsPaid() bool {
 	return p.Status == StatusPaymentCompleted
+}
+
+// PaidAmount returns TxnAmount (production)
+func (p WebhookPayload) PaidAmount() float64 {
+	if p.TxnAmount > 0 {
+		return p.TxnAmount
+	}
+	return p.Amount
+}
+
+// Bank returns PaymentMethod (production)
+func (p WebhookPayload) Bank() string {
+	if p.PaymentMethod != "" {
+		return p.PaymentMethod
+	}
+	return p.Origin
 }
 
 func (c *Client) VerifySignature(rawBody []byte, signature string) bool {

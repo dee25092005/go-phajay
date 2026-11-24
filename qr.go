@@ -2,10 +2,8 @@ package phajay
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
-	"strings"
 )
 
 type Bank string
@@ -39,26 +37,24 @@ type QRRequest struct {
 }
 
 type QRResponse struct {
-	Message       string `json:"message"`
-	TransactionID string `json:"transactionId"`
-	QRCode        string `json:"qrCode"`
-	Link          string `json:"link"`
-	BillNumber    string `json:"billNumber,omitempty"`
+	Message       string  `json:"message"`
+	TransactionID string  `json:"transactionId"`
+	QRCode        string  `json:"qrCode"`
+	Link          string  `json:"link"`
+	BillNumber    string  `json:"billNumber,omitempty"`
+	Amount        float64 `json:"amount,omitempty"`
 }
 
 func (c *Client) GenerateQR(ctx context.Context, bank Bank, req QRRequest) (*QRResponse, error) {
 	if !bank.valid() {
 		return nil, fmt.Errorf("phajay: unsupported bank %q", bank)
 	}
-	if req.Amount <= 0 {
-		return nil, errors.New("phajay: amount must be greater than 0")
-	}
-	if strings.TrimSpace(req.Description) == "" {
-		return nil, errors.New("phajay: description is required")
+	if err := c.validatePayment(req.Amount, req.Description, bank); err != nil {
+		return nil, err
 	}
 
 	prefix := ""
-	if c.isSandbox {
+	if c.env == EnvMock {
 		prefix = "/test"
 	}
 	path := fmt.Sprintf("%s/payment/generate-%s-qr", prefix, bank)
