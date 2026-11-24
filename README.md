@@ -1,5 +1,15 @@
 # go-phajay
 
+[![Version](https://img.shields.io/github/v/tag/dee25092005/go-phajay?label=version&sort=semver)](https://github.com/dee25092005/go-phajay/tags)
+[![Go Reference](https://pkg.go.dev/badge/github.com/dee25092005/go-phajay.svg)](https://pkg.go.dev/github.com/dee25092005/go-phajay)
+[![Go Report Card](https://goreportcard.com/badge/github.com/dee25092005/go-phajay)](https://goreportcard.com/report/github.com/dee25092005/go-phajay)
+[![Go Version](https://img.shields.io/github/go-mod/go-version/dee25092005/go-phajay)](https://github.com/dee25092005/go-phajay/blob/main/go.mod)
+[![License](https://img.shields.io/github/license/dee25092005/go-phajay)](https://github.com/dee25092005/go-phajay/blob/main/LICENSE)
+[![Stars](https://img.shields.io/github/stars/dee25092005/go-phajay?style=flat)](https://github.com/dee25092005/go-phajay/stargazers)
+[![Last Commit](https://img.shields.io/github/last-commit/dee25092005/go-phajay)](https://github.com/dee25092005/go-phajay/commits/main)
+[![Issues](https://img.shields.io/github/issues/dee25092005/go-phajay)](https://github.com/dee25092005/go-phajay/issues)
+![Views](https://gitviews.com/repo/dee25092005/go-phajay.svg?label=views)
+
 Lightweight Go SDK for the PhaJay Payment Gateway (API v1), with an optional
 Echo v4 webhook adapter.
 
