@@ -31,8 +31,7 @@ subpackage.
   [go-phajay Client]
             |
             |-- Validation guard: in "test"/"mock" mode blocks amount outside 1-999
-            |                     and Lao text; blocks Lao/Thai on BCEL;
-            |                     APB description must be under 25 characters
+            |                     and Lao text; blocks Lao/Thai on BCEL
             |-- Route prefix:     "/test" only when PHAJAY_ENV=mock
             |-- Auth header:      "secretKey" for QR, "Basic" for Link and Status
             |
@@ -40,7 +39,8 @@ subpackage.
             v
   [PhaJay Gateway API] -> returns transactionId (or linkCode) + qrCode / link
             |
-            |  3. Customer pays in a bank app (onepay:// for BCEL) or the PhaJay app (mock)
+            |  3. Customer pays in their bank's app via the returned link (onepay:// for BCEL)
+            |     or the PhaJay app (mock)
             v
   [Payment confirmation, two paths]
             |-- Push: PhaJay POSTs to your webhook -> phajayecho.WebhookHandler
@@ -51,15 +51,32 @@ subpackage.
 
 ## Supported Banks
 
-| Constant | Bank | Notes |
-| --- | --- | --- |
-| `phajay.BankBCEL` | BCEL (BCEL One) | Returns an `onepay://` link. Lao and Thai characters are blocked in the description. |
-| `phajay.BankJDB` | Joint Development Bank | Standard QR |
-| `phajay.BankLDB` | Lao Development Bank | Standard QR |
-| `phajay.BankIB` | Indochina Bank | Standard QR |
-| `phajay.BankSTB` | ST Bank Laos | Standard QR |
-| `phajay.BankAPB` | Agricultural Promotion Bank | Description must be shorter than 25 characters |
-| `phajay.BankMMoney` | M MoneyX | Standard QR |
+| Constant | Bank | Endpoint | Notes |
+| --- | --- | --- | --- |
+| `phajay.BankBCEL` | BCEL (BCEL One) | `/generate-bcel-qr` | `link` is an `onepay://` deeplink. The QR is not Lao QR and only scans in the BCEL One app. Lao and Thai characters are blocked in the description. |
+| `phajay.BankJDB` | Joint Development Bank | `/generate-jdb-qr` | `link` opens the JDB app |
+| `phajay.BankLDB` | Lao Development Bank | `/generate-ldb-qr` | `link` opens the LDB app |
+| `phajay.BankIB` | Indochina Bank | `/generate-ib-qr` | No app deeplink: show the `qrCode` instead |
+
+The `link` field in the QR response is a deeplink into that bank's own mobile
+app, as returned by PhaJay. Only BCEL uses the `onepay://` scheme. Always check
+that `link` is not empty before redirecting, and fall back to showing `qrCode`.
+
+### QR request and response
+
+Request fields: `Amount` and `Description` are required. `OrderNo` is
+optional but recommended, and should be unique. `Tag1`, `Tag2` and `Tag3` are
+custom reference fields.
+
+Response fields: `Message`, `TransactionID`, `QRCode` (the QR string) and
+`Link` (bank app deeplink).
+
+### In development
+
+ST Bank (STB), Agricultural Promotion Bank (APB) and M MoneyX are not
+supported yet. They did not work reliably, so they were removed in v1.1.0 and
+will come back in a future release. Calling `GenerateQR` with one of them
+returns an `unsupported bank` error. Use BCEL, JDB, LDB or IB for now.
 
 ## Environments
 
@@ -74,7 +91,7 @@ Any unrecognised value is treated as `production`, so check the spelling.
 ## Installation
 
 ```bash
-go get github.com/dee25092005/go-phajay@v1.0.2
+go get github.com/dee25092005/go-phajay@v1.1.0
 ```
 
 ## Usage

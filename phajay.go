@@ -12,7 +12,6 @@ import (
 	"os"
 	"strings"
 	"time"
-	"unicode/utf8"
 )
 
 const DefaultBaseURL = "https://payment-gateway.phajay.co/v1/api"
@@ -119,15 +118,8 @@ func (c *Client) validatePayment(amount float64, description string, bank Bank) 
 		}
 	}
 
-	switch bank {
-	case BankBCEL:
-		if containsLaoOrThai(desc) {
-			return errors.New("phajay: bcel description does not support Lao or Thai characters")
-		}
-	case BankAPB:
-		if utf8.RuneCountInString(desc) >= 25 {
-			return errors.New("phajay: apb description must be shorter than 25 characters")
-		}
+	if bank == BankBCEL && containsLaoOrThai(desc) {
+		return errors.New("phajay: bcel description does not support Lao or Thai characters")
 	}
 	return nil
 }

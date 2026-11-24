@@ -5,7 +5,6 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
 
 	"github.com/dee25092005/go-phajay"
@@ -58,12 +57,18 @@ func TestGenerateQR_ValidationRules(t *testing.T) {
 	test, _ := phajay.New(phajay.Config{SecretKey: "k", Env: phajay.EnvTest, BaseURL: srv.URL})
 	ctx := context.Background()
 
-	// APB: 24 chars ok, 25 chars rejected
-	if _, err := prod.GenerateQR(ctx, phajay.BankAPB, phajay.QRRequest{Amount: 10, Description: strings.Repeat("A", 24)}); err != nil {
-		t.Fatalf("24-char APB description should pass: %v", err)
+	// Banks that are still in development are rejected
+	for _, b := range []string{"stb", "apb", "m-money"} {
+		if _, err := prod.GenerateQR(ctx, phajay.Bank(b), phajay.QRRequest{Amount: 10, Description: "x"}); err == nil {
+			t.Fatalf("bank %q is not supported yet and should be rejected", b)
+		}
 	}
-	if _, err := prod.GenerateQR(ctx, phajay.BankAPB, phajay.QRRequest{Amount: 10, Description: strings.Repeat("A", 25)}); err == nil {
-		t.Fatal("25-char APB description should be rejected")
+
+	// Supported banks pass
+	for _, b := range []phajay.Bank{phajay.BankBCEL, phajay.BankJDB, phajay.BankLDB, phajay.BankIB} {
+		if _, err := prod.GenerateQR(ctx, b, phajay.QRRequest{Amount: 10, Description: "x"}); err != nil {
+			t.Fatalf("bank %q should be supported: %v", b, err)
+		}
 	}
 
 	// Amount and description basics

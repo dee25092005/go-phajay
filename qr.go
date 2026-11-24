@@ -8,19 +8,17 @@ import (
 
 type Bank string
 
+// Supported banks. STB, APB and M MoneyX are in development and not available yet.
 const (
-	BankBCEL   Bank = "bcel"
-	BankJDB    Bank = "jdb"
-	BankLDB    Bank = "ldb"
-	BankIB     Bank = "ib"
-	BankSTB    Bank = "stb"
-	BankAPB    Bank = "apb"
-	BankMMoney Bank = "m-money"
+	BankBCEL Bank = "bcel"
+	BankJDB  Bank = "jdb"
+	BankLDB  Bank = "ldb"
+	BankIB   Bank = "ib"
 )
 
 func (b Bank) valid() bool {
 	switch b {
-	case BankBCEL, BankJDB, BankLDB, BankIB, BankSTB, BankAPB, BankMMoney:
+	case BankBCEL, BankJDB, BankLDB, BankIB:
 		return true
 	default:
 		return false
@@ -36,13 +34,14 @@ type QRRequest struct {
 	Tag3        string  `json:"tag3,omitempty"`
 }
 
+// QRResponse is the gateway reply for a generated bank QR.
+// Link is a deeplink that opens the paying bank's own mobile app (BCEL uses
+// onepay://). It may be empty, for example for IB, which has no app deeplink.
 type QRResponse struct {
-	Message       string  `json:"message"`
-	TransactionID string  `json:"transactionId"`
-	QRCode        string  `json:"qrCode"`
-	Link          string  `json:"link"`
-	BillNumber    string  `json:"billNumber,omitempty"`
-	Amount        float64 `json:"amount,omitempty"`
+	Message       string `json:"message"`
+	TransactionID string `json:"transactionId"`
+	QRCode        string `json:"qrCode"`
+	Link          string `json:"link"`
 }
 
 func (c *Client) GenerateQR(ctx context.Context, bank Bank, req QRRequest) (*QRResponse, error) {
